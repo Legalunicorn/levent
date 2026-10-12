@@ -34,7 +34,7 @@ try {
   let page = await context.newPage(); const errors = [];
   page.on('pageerror', e => errors.push(e.message));
   const response = await page.goto(baseURL); assert.equal(response.status(), 200);
-  await page.getByText('Good hosting starts here.').waitFor();
+  await page.getByText('No guests yet').waitFor();
   assert.equal(await page.locator('.guest-card').count(), 0);
   const fresh = await browser.newContext(); const freshPage = await fresh.newPage(); await freshPage.goto(baseURL);
   const s = emptyState(); s.guests = Array.from({ length: 6 }, (_, i) => ({ id: `generated-${i}`, name: `Guest ${i + 1}`, company: 'Example company', title: 'Event visitor', contact: i === 0 ? '<img src=x onerror=alert(1)>' : '+65 0000 0000', attendance: 'Not Arrived', starter: i < 4 ? 'Salmon Trout' : '', main: i < 2 ? 'Eggplant' : '', parking: 'No', taxi: 'No', notes: '' }));
@@ -82,7 +82,7 @@ try {
   await page.locator('#choose-main').click(); await page.getByRole('button', { name: /Laksa \(4\)/ }).click();
   await page.locator('#choose-starter').click(); await page.getByRole('button', { name: /Iceplant Salad \(2\)/ }).click();
   await page.locator('#done-detail').click(); assert.equal(await page.locator('.guest-card').count(), 7);
-  await page.reload(); await page.getByRole('button', { name: 'Meal & event summary', exact: true }).click();
+  await page.reload(); await page.getByRole('button', { name: 'Summary', exact: true }).click();
   const laksaGuests = page.locator('details[data-dish="main:Laksa"]');
   await laksaGuests.locator('summary').click(); assert.match(await laksaGuests.locator('li').textContent(), /Walk-in guest.*Example company/);
   const saladGuests = page.locator('details[data-dish="starter:Iceplant Salad"]');

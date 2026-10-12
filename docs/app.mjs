@@ -16,13 +16,13 @@ catch { storageBroken = true; notice('Saved data could not be read. It has not b
 
 function stat(value, label, cls = '') { const box = el('div', 'stat'); box.append(el('span', `stat-value ${cls}`, value), el('span', 'stat-label', label)); return box; }
 function renderOverview() {
-  $('overview').replaceChildren(stat(state.guests.length, 'Guests on the list'), stat(state.guests.filter(g => g.attendance === 'Arrived').length, 'Arrived & welcomed', 'stat-accent'), stat(state.guests.filter(missingMeal).length, 'Still need meal choices', 'stat-warm'), stat(state.guests.filter(g => g.parking === 'Yes').length, 'Parking coupons requested'));
+  $('overview').replaceChildren(stat(state.guests.length, 'Total guests'), stat(state.guests.filter(g => g.attendance === 'Arrived').length, 'Arrived', 'stat-accent'), stat(state.guests.filter(missingMeal).length, 'Missing meals', 'stat-warm'), stat(state.guests.filter(g => g.parking === 'Yes').length, 'Parking coupons'));
   $('guest-count').textContent = state.guests.length;
-  $('top-import').textContent = state.guests.length ? '＋ Replace guest list' : '＋ Import guest list';
+  $('top-import').hidden = state.guests.length > 0;
 }
 function renderList() {
   const guests = searchGuests(state.guests, $('search').value).filter(g => filter === 'all' || (filter === 'missing' ? missingMeal(g) : g.attendance === 'Arrived'));
-  $('list-caption').textContent = state.guests.length ? `${guests.length} of ${state.guests.length} guests · Tap a card to update details` : 'YOUR GUEST LIST';
+  $('list-caption').textContent = state.guests.length ? `${guests.length} of ${state.guests.length} guests` : '';
   const cards = guests.map(g => {
     const card = button('', 'guest-card', () => openGuest(g.id)); card.dataset.guestId = g.id;
     const top = el('div', 'card-top');
@@ -33,7 +33,7 @@ function renderList() {
     card.append(top, el('h3', 'guest-name', g.name), el('div', 'company', g.company || 'Company not provided'), selections, foot); return card;
   });
   if (!cards.length) {
-    const box = el('div', 'empty'); box.append(el('div', 'empty-icon', state.guests.length ? '⌕' : 'g.'), el('h2', '', state.guests.length ? 'No guests found' : 'Good hosting starts here.'), el('p', '', state.guests.length ? 'Try another name or switch your guest filter.' : 'Import your private Excel (.xlsx) or CSV file to get started. Your list and responses stay in this browser.'));
+    const box = el('div', 'empty'); box.append(el('h2', '', state.guests.length ? 'No guests found' : 'No guests yet'), el('p', '', state.guests.length ? 'Try another name or filter.' : 'Import Attendance List.xlsx or add a guest.'));
     box.append(button(state.guests.length ? 'Reset search & filters' : 'Import guest list', 'primary', () => { if (!state.guests.length) $('csv-file').click(); else { $('search').value = ''; selectFilter('all'); } })); cards.push(box);
   }
   $('guest-list').replaceChildren(...cards);
@@ -42,7 +42,7 @@ function renderSummary() {
   const root = $('summary-view');
   const expanded = new Set([...root.querySelectorAll('details[open]')].map(d => d.dataset.dish));
   root.replaceChildren();
-  const head = el('div', 'section-heading'); head.append(el('p', 'eyebrow', 'THE EVENT AT A GLANCE'), el('h2', '', 'Every portion accounted for.'), el('p', '', 'Remaining = ordered minus selected. Meals count for all guests, including those not attending.')); root.append(head);
+  const head = el('div', 'section-heading'); head.append(el('h2', '', 'Meals'), el('p', '', 'Remaining = ordered − selected. Includes guests marked not attending.')); root.append(head);
   const grid = el('div', 'summary-grid');
   for (const course of ['starter', 'main']) {
     const panel = el('article', 'panel'); panel.append(el('h3', '', course === 'starter' ? 'Starters' : 'Mains'));

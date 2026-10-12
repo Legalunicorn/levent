@@ -36,7 +36,7 @@ All assets use relative paths, so the app works under a repository subpath. Only
 1. Receive the website URL and the private Excel (.xlsx) or CSV file separately. Save the file to **Files**.
 2. Open the website in Safari and tap **Import guest list**. Choose the Excel or CSV file.
 3. Search by name, open a guest card, and update arrival, meals, parking, reimbursement or notes. Each change saves locally; check the saving indicator.
-   Use **Add guest** for someone new; only their name is required. Their detail screen opens next for meal and arrival choices. In **Meal & event summary**, tap **View guests** under any starter or main to see the names and companies of everyone who selected it.
+   Use **Add guest** for someone new; only their name is required. Their detail screen opens next for meal and arrival choices. In **Summary**, tap **View guests** under any starter or main to see the names and companies of everyone who selected it.
 4. Open **Backup & data → Export backup**. Save the JSON download to Files. Export at least before and after the event.
 5. To recover or move devices, open the website and choose **Restore backup** with that JSON file. It restores records, notes, stable IDs and meal limits.
 6. **Export CSV** produces an Excel-friendly copy of the current records, including notes and IDs. Formula-like text is escaped for spreadsheet safety; Gather’s encoding marker supports lossless re-import. Use JSON for full backups including meal limits.
