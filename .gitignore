@@ -1,0 +1,9 @@
+node_modules/
+private/
+test-results/
+*.csv
+*.xlsx
+*.xls
+*backup*.json
+.DS_Store
+
