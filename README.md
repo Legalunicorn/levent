@@ -1,6 +1,6 @@
 # Gather
 
-A mobile-friendly event guest tracker for iPhone Safari. Buildless HTML, CSS and JavaScript; no accounts, uploads, analytics, external libraries or backend.
+A mobile-friendly event guest tracker for iPhone Safari. Buildless HTML, CSS and JavaScript; no accounts, uploads, analytics or backend. Excel import uses a bundled copy of SheetJS; no installation is needed.
 
 ## Run locally
 
@@ -33,8 +33,8 @@ All assets use relative paths, so the app works under a repository subpath. Only
 
 ## iPhone workflow
 
-1. Receive the website URL and the private guest CSV separately. Save the CSV to **Files**.
-2. Open the website in Safari and tap **Import guest list**. Choose the CSV.
+1. Receive the website URL and the private Excel (.xlsx) or CSV file separately. Save the file to **Files**.
+2. Open the website in Safari and tap **Import guest list**. Choose the Excel or CSV file.
 3. Search by name, open a guest card, and update arrival, meals, parking, reimbursement or notes. Each change saves locally; check the saving indicator.
 4. Open **Backup & data → Export backup**. Save the JSON download to Files. Export at least before and after the event.
 5. To recover or move devices, open the website and choose **Restore backup** with that JSON file. It restores records, notes, stable IDs and meal limits.
@@ -48,9 +48,11 @@ The public website starts empty. Guest data is parsed and stored entirely in the
 
 **Never add real guest data to this repository**, including fixtures, screenshots, backups, source workbooks or deployment files. `.gitignore` excludes CSV and Excel files as an extra safeguard. The private converted guest CSV is delivered separately outside the repository. No source workbook or private CSV is required to run or deploy the app.
 
-CSV requires these original headers: `Name`, `Company`, `Title`, `Email`, `Attendance`, `Preferred Lunch Starter`, `Preferred Lunch Main`, `Carpark Coupon?`, `Taxi/Grab Reimbursement?`. `Notes` and `Guest ID` are optional. Contact values are preserved as text, including non-email values. Blank responses stay blank. Unknown status or meal values, missing headers and malformed CSV are rejected before replacing records. Imports have a 10 MB limit.
+Excel import supports the supplied attendance template: worksheet `Event Registration`, headers in row 4, guest records in columns A–I from row 5 onward. Hotel totals in K–O are ignored. All data is read locally. The Excel library is included in `docs/vendor/` with its license; no external service is contacted.
 
-Meal quantities show remaining portions. All assigned meals count regardless of attendance. Exhausted dishes remain visible in red and cannot be newly assigned; existing selections can be kept or cleared. Imported over-allocation is preserved and flagged in the summary. CSV replacement resets limits to hotel defaults; JSON restore uses the allocations in the backup.
+CSV requires these original headers: `Name`, `Company`, `Title`, `Email`, `Attendance`, `Preferred Lunch Starter`, `Preferred Lunch Main`, `Carpark Coupon?`, `Taxi/Grab Reimbursement?`. `Notes` and `Guest ID` are optional. Contact values are preserved as text, including non-email values. Blank responses stay blank. Unknown status or meal values, missing headers and malformed files are rejected before replacing records. Imports have a 10 MB limit.
+
+Meal quantities show remaining portions. All assigned meals count regardless of attendance. Exhausted dishes remain visible in red and cannot be newly assigned; existing selections can be kept or cleared. Imported over-allocation is preserved and flagged in the summary. Excel or CSV replacement resets limits to hotel defaults; JSON restore uses the allocations in the backup.
 
 ## Files
 

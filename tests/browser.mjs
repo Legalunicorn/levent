@@ -12,6 +12,24 @@ await once(server.stdout, 'data');
 const baseURL = 'http://127.0.0.1:4174';
 const browser = await chromium.launch({ headless: true, ...(process.env.CHROME_PATH ? { executablePath: process.env.CHROME_PATH } : {}) });
 try {
+  if (process.env.PRIVATE_GUEST_XLSX) {
+    const excelContext = await browser.newContext({ viewport: { width: 390, height: 844 } });
+    const excelPage = await excelContext.newPage();
+    await excelPage.goto(baseURL);
+    assert.match(await excelPage.locator('#csv-file').getAttribute('accept'), /\.xlsx/);
+    await excelPage.locator('#csv-file').setInputFiles(process.env.PRIVATE_GUEST_XLSX);
+    await excelPage.locator('.guest-card').nth(10).waitFor();
+    assert.equal(await excelPage.locator('.guest-card').count(), 11);
+    const records = await excelPage.evaluate(() => JSON.parse(localStorage.getItem('gather:v1:/')).guests);
+    assert.equal(records.filter(g => g.starter === 'Salmon Trout').length, 4);
+    assert.equal(records.filter(g => g.main === 'Eggplant').length, 2);
+    assert.ok(records.every(g => g.parking === 'No' && g.taxi === 'No'));
+    await excelPage.locator('#csv-file').setInputFiles({ name: 'broken.xlsx', mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', buffer: Buffer.from('broken') });
+    await excelPage.getByText(/Import not completed/).waitFor();
+    assert.equal(await excelPage.locator('.guest-card').count(), 11);
+    await excelContext.close();
+    console.log('PASS: original private Excel workbook imports directly in browser; corrupt Excel preserves current records.');
+  }
   const context = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, deviceScaleFactor: 1 });
   let page = await context.newPage(); const errors = [];
   page.on('pageerror', e => errors.push(e.message));

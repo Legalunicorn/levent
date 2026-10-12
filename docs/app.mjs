@@ -1,4 +1,5 @@
 import { emptyState, validateState, importCSV, exportCSV, meals, setMeal, missingMeal, searchGuests, ATTENDANCE, ANSWERS } from './core.mjs';
+import { importExcel } from './excel.mjs';
 const $ = id => document.getElementById(id);
 const KEY = `gather:v1:${location.pathname.replace(/index\.html$/, '')}`;
 let state = emptyState(), currentView = 'guests', filter = 'all', activeId = null, saved = false, storageBroken = false, scrollY = 0, returnFocus = null;
@@ -11,7 +12,7 @@ function persist() {
   catch { saved = false; storageBroken = true; savingStatus('Not saved · Export a backup now', true); notice('Saving failed. Your current edits are only in memory. Export a JSON backup before closing or refreshing this page.'); }
 }
 try { const raw = localStorage.getItem(KEY); if (raw) { state = validateState(JSON.parse(raw)); saved = true; savingStatus('✓ Restored from this device'); } }
-catch { storageBroken = true; notice('Saved data could not be read. It has not been overwritten. Restore a valid backup or import a CSV to continue.'); savingStatus('Local storage unavailable or saved data invalid', true); }
+catch { storageBroken = true; notice('Saved data could not be read. It has not been overwritten. Restore a valid backup or import an Excel or CSV file to continue.'); savingStatus('Local storage unavailable or saved data invalid', true); }
 
 function stat(value, label, cls = '') { const box = el('div', 'stat'); box.append(el('span', `stat-value ${cls}`, value), el('span', 'stat-label', label)); return box; }
 function renderOverview() {
@@ -32,7 +33,7 @@ function renderList() {
     card.append(top, el('h3', 'guest-name', g.name), el('div', 'company', g.company || 'Company not provided'), selections, foot); return card;
   });
   if (!cards.length) {
-    const box = el('div', 'empty'); box.append(el('div', 'empty-icon', state.guests.length ? '⌕' : 'g.'), el('h2', '', state.guests.length ? 'No guests found' : 'Good hosting starts here.'), el('p', '', state.guests.length ? 'Try another name or switch your guest filter.' : 'Import your private guest CSV to get started. Your list and responses stay in this browser.'));
+    const box = el('div', 'empty'); box.append(el('div', 'empty-icon', state.guests.length ? '⌕' : 'g.'), el('h2', '', state.guests.length ? 'No guests found' : 'Good hosting starts here.'), el('p', '', state.guests.length ? 'Try another name or switch your guest filter.' : 'Import your private Excel (.xlsx) or CSV file to get started. Your list and responses stay in this browser.'));
     box.append(button(state.guests.length ? 'Reset search & filters' : 'Import guest list', 'primary', () => { if (!state.guests.length) $('csv-file').click(); else { $('search').value = ''; selectFilter('all'); } })); cards.push(box);
   }
   $('guest-list').replaceChildren(...cards);
@@ -104,8 +105,12 @@ async function readImport(input, kind) {
   const file = input.files[0]; if (!file) return;
   try {
     if (file.size > 10 * 1024 * 1024) throw new Error('Please choose a file smaller than 10 MB.');
-    const text = await file.text(); const next = kind === 'csv' ? importCSV(text) : validateState(JSON.parse(text.replace(/^\uFEFF/, '')));
-    if (!confirmReplace(kind === 'csv' ? 'Importing this CSV' : 'Restoring this backup')) return;
+    let next;
+    if (kind === 'json') next = validateState(JSON.parse((await file.text()).replace(/^\uFEFF/, '')));
+    else if (/\.xlsx$/i.test(file.name)) next = await importExcel(await file.arrayBuffer());
+    else if (/\.csv$/i.test(file.name)) next = importCSV(await file.text());
+    else throw new Error('Choose an Excel (.xlsx) or CSV (.csv) file.');
+    if (!confirmReplace(kind === 'json' ? 'Restoring this backup' : 'Importing this guest list')) return;
     state = next; $('search').value = ''; filter = 'all'; notice(); persist(); render(); selectFilter('all');
     const warnings = overages(); if (warnings.length && !storageBroken) notice(`Imported all records. Please resolve these meal allocations in Summary:\n${warnings.join('\n')}`);
   } catch (e) { notice(`Import not completed. Existing records are unchanged. ${e.message}`); }
