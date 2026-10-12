@@ -39,7 +39,9 @@ function renderList() {
   $('guest-list').replaceChildren(...cards);
 }
 function renderSummary() {
-  const root = $('summary-view'); root.replaceChildren();
+  const root = $('summary-view');
+  const expanded = new Set([...root.querySelectorAll('details[open]')].map(d => d.dataset.dish));
+  root.replaceChildren();
   const head = el('div', 'section-heading'); head.append(el('p', 'eyebrow', 'THE EVENT AT A GLANCE'), el('h2', '', 'Every portion accounted for.'), el('p', '', 'Remaining = ordered minus selected. Meals count for all guests, including those not attending.')); root.append(head);
   const grid = el('div', 'summary-grid');
   for (const course of ['starter', 'main']) {
@@ -49,7 +51,17 @@ function renderSummary() {
       top.append(el('span', '', m.name), el('strong', '', `${m.remaining} remaining`));
       // Use a native progress element to keep styling compatible with the CSP.
       const progress = el('progress'); progress.max = Math.max(m.ordered, m.selected, 1); progress.value = m.selected; progress.setAttribute('aria-label', `${m.name}: ${m.selected} selected of ${m.ordered} ordered`);
-      row.append(top, el('div', 'dish-detail', `${m.ordered} ordered · ${m.selected} selected${m.remaining < 0 ? ` · Over-allocated by ${-m.remaining}` : m.remaining === 0 ? ' · Unavailable' : ''}`), progress); panel.append(row);
+      row.append(top, el('div', 'dish-detail', `${m.ordered} ordered · ${m.selected} selected${m.remaining < 0 ? ` · Over-allocated by ${-m.remaining}` : m.remaining === 0 ? ' · Unavailable' : ''}`), progress);
+      const details = el('details', 'dish-guests'); details.dataset.dish = `${course}:${m.name}`; details.open = expanded.has(details.dataset.dish);
+      details.append(el('summary', '', `View guests (${m.selected})`));
+      const selected = state.guests.filter(g => g[course] === m.name);
+      if (!selected.length) details.append(el('p', 'muted', 'No guests have selected this dish.'));
+      else {
+        const list = el('ul', 'selected-guests');
+        for (const guest of selected) { const item = el('li'); item.append(el('span', '', guest.name)); if (guest.company) item.append(el('small', '', guest.company)); list.append(item); }
+        details.append(list);
+      }
+      row.append(details); panel.append(row);
     } grid.append(panel);
   } root.append(grid);
   const counts = el('div', 'summary-counts');
@@ -57,6 +69,27 @@ function renderSummary() {
   for (const [label, value] of data) { const item = el('div', 'panel'); item.append(el('strong', '', value), el('span', '', label)); counts.append(item); } root.append(counts);
 }
 function render() { renderOverview(); renderList(); renderSummary(); }
+let pendingGuestId = null;
+$('add-guest').addEventListener('click', () => {
+  $('add-form').reset(); $('new-name').setCustomValidity('');
+  document.body.classList.add('modal-open'); $('add-dialog').showModal(); $('new-name').focus();
+});
+for (const id of ['cancel-add', 'cancel-add-form']) $(id).addEventListener('click', () => $('add-dialog').close());
+$('new-name').addEventListener('input', () => $('new-name').setCustomValidity(''));
+$('add-form').addEventListener('submit', e => {
+  e.preventDefault();
+  const name = $('new-name').value.trim();
+  if (!name) { $('new-name').setCustomValidity('Enter a guest name.'); $('new-name').reportValidity(); return; }
+  if (!state.guests.length && storageBroken && !confirmReplace('Adding a guest')) return;
+  const guest = { id: crypto.randomUUID(), name, company: $('new-company').value, title: $('new-title').value, contact: $('new-contact').value,
+    attendance: 'Not Arrived', starter: '', main: '', parking: 'Not asked', taxi: 'Not asked', notes: '' };
+  state.guests.push(guest); persist(); $('search').value = ''; selectFilter('all'); render();
+  pendingGuestId = guest.id; $('add-dialog').close();
+});
+$('add-dialog').addEventListener('close', () => {
+  document.body.classList.remove('modal-open');
+  if (pendingGuestId) { const id = pendingGuestId; pendingGuestId = null; openGuest(id); }
+});
 function selectFilter(value) { filter = value; document.querySelectorAll('[data-filter]').forEach(b => b.setAttribute('aria-pressed', b.dataset.filter === filter)); renderList(); }
 document.querySelectorAll('[data-filter]').forEach(b => b.addEventListener('click', () => selectFilter(b.dataset.filter)));
 $('search').addEventListener('input', renderList);

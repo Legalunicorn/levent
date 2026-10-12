@@ -8,8 +8,8 @@
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
   <title>Gather · Guest tracker</title>
   <link rel="icon" href="./icon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="./styles.css">
-  <script type="module" src="./app.mjs?v=excel-direct-2"></script>
+  <link rel="stylesheet" href="./styles.css?v=guests-3">
+  <script type="module" src="./app.mjs?v=guests-3"></script>
 </head>
 <body>
   <header class="masthead"><a class="brand" href="./" aria-label="Gather home"><span class="brand-icon">g.</span> gather<span class="brand-caption">EVENT COMPANION</span></a><span class="privacy-dot">On this device only</span></header>
@@ -21,7 +21,7 @@
     <nav class="tabs" aria-label="Main navigation"><button data-view="guests" aria-current="page">Guests <span id="guest-count">0</span></button><button data-view="summary">Meal & event summary</button><button data-view="data">Backup & data</button></nav>
     <section id="guests-view" aria-label="Guest list">
       <div class="list-tools"><div class="search-wrap"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></svg><input id="search" type="search" placeholder="Find a guest by name…" aria-label="Search by guest name" autocomplete="off"></div><div class="filters" aria-label="Filter guests"><button data-filter="all" aria-pressed="true">All guests</button><button data-filter="missing" aria-pressed="false">Missing meals</button><button data-filter="arrived" aria-pressed="false">Arrived</button></div></div>
-      <p class="list-caption" id="list-caption" aria-live="polite"></p><div id="guest-list" class="guest-list"></div>
+      <div class="list-heading"><p class="list-caption" id="list-caption" aria-live="polite"></p><button id="add-guest" class="secondary">＋ Add guest</button></div><div id="guest-list" class="guest-list"></div>
     </section>
     <section id="summary-view" hidden aria-label="Event summary"></section>
     <section id="data-view" hidden aria-label="Backup and data">
@@ -31,9 +31,20 @@
       <details class="help"><summary>Quick guide for iPhone</summary><ol><li>Save the private Excel (.xlsx) or CSV file to the Files app.</li><li>Open this website in Safari. Tap <strong>Import guest list</strong> and choose the Excel or CSV file.</li><li>Search for a guest and tap their card. Every edit saves automatically when storage is available.</li><li>Meal numbers are portions remaining. Red choices are unavailable; you can keep a guest’s existing choice.</li><li>Use <strong>Export backup</strong>, then save the downloaded JSON to Files. Use <strong>Restore backup</strong> to bring it back.</li></ol></details>
       <button id="clear-data" class="danger-link">Clear local data</button>
     </section>
-    <footer><span class="footer-mark">gather</span><span>Excel import v2</span><span>Private by design · No uploads</span></footer>
+    <footer><span class="footer-mark">gather</span><span>Guest tracker v3</span><span>Private by design · No uploads</span></footer>
   </main>
   <input type="file" id="csv-file" accept=".xlsx,.csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/csv" hidden><input type="file" id="json-file" accept=".json,application/json" hidden>
+  <dialog id="add-dialog" aria-labelledby="add-title">
+    <div class="sheet-header"><h2 id="add-title">Add a guest</h2><button id="cancel-add" class="icon-button" aria-label="Cancel adding guest">✕</button></div>
+    <form id="add-form">
+      <label class="field-label" for="new-name">Guest name · required</label><input id="new-name" name="name" required autocomplete="off">
+      <label class="field-label" for="new-company">Company · optional</label><input id="new-company" name="company" autocomplete="off">
+      <label class="field-label" for="new-title">Job title · optional</label><input id="new-title" name="title" autocomplete="off">
+      <label class="field-label" for="new-contact">Email / contact · optional</label><input id="new-contact" name="contact" autocomplete="off">
+      <p class="muted add-hint">You can set their arrival, meals, and other details next.</p>
+      <div class="sheet-footer"><button type="button" id="cancel-add-form" class="secondary">Cancel</button><button type="submit" class="primary">Add guest</button></div>
+    </form>
+  </dialog>
   <dialog id="guest-dialog" aria-labelledby="detail-name"><div class="sheet-header"><span class="eyebrow">GUEST DETAILS</span><button id="close-detail" class="icon-button" aria-label="Close guest details">✕</button></div><div id="guest-detail"></div><div class="sheet-footer"><span id="detail-save" role="status">Saved on this device</span><button id="done-detail" class="primary">Done</button></div></dialog>
   <dialog id="meal-dialog" aria-labelledby="meal-title"><div class="sheet-header"><div><p class="eyebrow">LUNCH SELECTION</p><h2 id="meal-title">Choose a starter</h2></div><button id="close-meal" class="icon-button" aria-label="Close meal choices">✕</button></div><p class="muted">Numbers show portions remaining. All assigned meals count, regardless of attendance.</p><div id="meal-options"></div></dialog>
   <noscript><p>This tracker needs JavaScript enabled to import and save guests locally.</p></noscript>

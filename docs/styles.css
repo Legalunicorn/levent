@@ -190,3 +190,13 @@ progress::-moz-progress-bar{background:#728c5c;border-radius:6px}
 .unavailable progress::-webkit-progress-value{background:#b85a55}
 
 .unavailable progress::-moz-progress-bar{background:#b85a55}
+.list-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:14px 0}
+.list-heading .list-caption{margin:0}
+.list-heading button{flex-shrink:0;font-size:13px;padding:10px 13px}
+#add-form input{width:100%;min-height:48px;font-size:16px;padding:12px;border:1px solid var(--line);border-radius:8px;background:white;color:var(--ink)}
+.add-hint{margin:18px 0 0}
+.dish-guests{margin-top:8px}
+.dish-guests summary{cursor:pointer;min-height:44px;padding:12px 0;font-size:13px;font-weight:600;color:var(--green)}
+.selected-guests{list-style:none;padding:0;margin:0 0 8px}
+.selected-guests li{padding:8px 0;border-top:1px solid var(--line);overflow-wrap:anywhere;font-size:14px}
+.selected-guests small{display:block;color:var(--muted);font-size:12px;margin-top:2px}
