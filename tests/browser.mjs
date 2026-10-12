@@ -6,6 +6,7 @@ import { join } from 'node:path';
 import { spawn } from 'node:child_process';
 import { once } from 'node:events';
 import { emptyState, exportCSV, importCSV, validateState } from '../docs/core.mjs';
+import * as XLSX from '../docs/vendor/xlsx.mjs';
 const { chromium } = await import(process.env.PLAYWRIGHT_MODULE || 'playwright');
 const server = spawn(process.execPath, ['scripts/serve.mjs'], { env: { ...process.env, PORT: '4174' }, windowsHide: true });
 await once(server.stdout, 'data');
@@ -20,6 +21,13 @@ try {
     await excelPage.locator('#csv-file').setInputFiles(process.env.PRIVATE_GUEST_XLSX);
     await excelPage.locator('.guest-card').nth(10).waitFor();
     assert.equal(await excelPage.locator('.guest-card').count(), 11);
+    await excelPage.locator('[data-view=data]').click();
+    excelPage.once('dialog', d => d.accept()); await excelPage.locator('#clear-data').click();
+    await excelPage.getByText('No guests yet').waitFor();
+    assert.equal(await excelPage.evaluate(() => localStorage.getItem('gather:v1:/')), null);
+    await excelPage.locator('#csv-file').setInputFiles(process.env.PRIVATE_GUEST_XLSX);
+    await excelPage.locator('.guest-card').nth(10).waitFor();
+    assert.equal(await excelPage.locator('#notice').isVisible(), false);
     const records = await excelPage.evaluate(() => JSON.parse(localStorage.getItem('gather:v1:/')).guests);
     assert.equal(records.filter(g => g.starter === 'Salmon Trout').length, 4);
     assert.equal(records.filter(g => g.main === 'Eggplant').length, 2);
@@ -30,6 +38,28 @@ try {
     await excelContext.close();
     console.log('PASS: original private Excel workbook imports directly in browser; corrupt Excel preserves current records.');
   }
+  const resetContext = await browser.newContext();
+  const resetPage = await resetContext.newPage(); const resetErrors = [];
+  resetPage.on('pageerror', e => resetErrors.push(e.message)); await resetPage.goto(baseURL);
+  const edited = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(edited, XLSX.utils.aoa_to_sheet([
+    ['Updated event'], [], ['Extra', 'Guest name', 'Main', 'Attendance status', 'Starter'],
+    ['Ignored', 'Edited guest', ' laksa ', ' arrived ', ' chicken breast '],
+  ]), 'New sheet name');
+  const editedFile = { name: 'Updated.xlsx', mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', buffer: Buffer.from(XLSX.write(edited, { type: 'array', bookType: 'xlsx' })) };
+  for (let i = 0; i < 2; i++) {
+    await resetPage.locator('#csv-file').setInputFiles(editedFile); await resetPage.locator('.guest-card').waitFor();
+    assert.equal(await resetPage.locator('#notice').isVisible(), false);
+    await resetPage.reload(); await resetPage.locator('.guest-card').waitFor();
+    await resetPage.evaluate(() => localStorage.clear()); await resetPage.reload(); await resetPage.getByText('No guests yet').waitFor();
+  }
+  // Clearing website data in another tab while details are open also resets this tab.
+  await resetPage.locator('#csv-file').setInputFiles(editedFile); await resetPage.locator('.guest-card').click();
+  const otherTab = await resetContext.newPage(); await otherTab.goto(baseURL); await otherTab.evaluate(() => localStorage.clear());
+  await resetPage.getByText('No guests yet').waitFor();
+  assert.equal(await resetPage.locator('#guest-dialog').evaluate(n => n.open), false);
+  await resetPage.locator('#csv-file').setInputFiles(editedFile); await resetPage.locator('.guest-card').waitFor();
+  assert.deepEqual(resetErrors, []); await resetContext.close();
+  console.log('PASS: clear and reimport, website storage clear/reload, edited Excel with extra columns, and clear from another tab.');
   const context = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, deviceScaleFactor: 1 });
   let page = await context.newPage(); const errors = [];
   page.on('pageerror', e => errors.push(e.message));

@@ -1,8 +1,9 @@
 import { emptyState, validateState, exportCSV, meals, setMeal, missingMeal, searchGuests, ATTENDANCE, ANSWERS } from './core.mjs';
-import { importGuestFile } from './excel.mjs?v=excel-direct-2';
+import { importGuestFile } from './excel.mjs?v=import-5';
 const $ = id => document.getElementById(id);
 const KEY = `gather:v1:${location.pathname.replace(/index\.html$/, '')}`;
 let state = emptyState(), currentView = 'guests', filter = 'all', activeId = null, saved = false, storageBroken = false, scrollY = 0, returnFocus = null;
+let importSequence = 0;
 function el(tag, cls, text) { const node = document.createElement(tag); if (cls) node.className = cls; if (text !== undefined) node.textContent = text; return node; }
 function button(text, cls, action) { const b = el('button', cls, text); b.type = 'button'; b.addEventListener('click', action); return b; }
 function notice(message = '') { $('notice').textContent = message; $('notice').hidden = !message; }
@@ -136,16 +137,18 @@ function confirmReplace(action) { return (!state.guests.length && !storageBroken
 function overages() { return ['starter', 'main'].flatMap(c => meals(state, c).filter(m => m.remaining < 0).map(m => `${m.name}: ${-m.remaining} over the allocation`)); }
 async function readImport(input, kind) {
   const file = input.files[0]; if (!file) return;
+  const sequence = ++importSequence;
   try {
     if (file.size > 10 * 1024 * 1024) throw new Error('Please choose a file smaller than 10 MB.');
     let next;
     if (kind === 'json') next = validateState(JSON.parse((await file.text()).replace(/^\uFEFF/, '')));
     else next = await importGuestFile(file);
+    if (sequence !== importSequence) return;
     if (!confirmReplace(kind === 'json' ? 'Restoring this backup' : 'Importing this guest list')) return;
     state = next; $('search').value = ''; filter = 'all'; notice(); persist(); render(); selectFilter('all');
     const warnings = overages(); if (warnings.length && !storageBroken) notice(`Imported all records. Please resolve these meal allocations in Summary:\n${warnings.join('\n')}`);
-  } catch (e) { notice(`Import not completed. Existing records are unchanged. ${e.message}`); }
-  finally { input.value = ''; }
+  } catch (e) { if (sequence === importSequence) notice(`Import not completed. Existing records are unchanged. ${e.message}`); }
+  finally { if (sequence === importSequence) input.value = ''; }
 }
 for (const id of ['top-import', 'replace-list']) $(id).addEventListener('click', () => $('csv-file').click());
 $('restore-backup').addEventListener('click', () => $('json-file').click());
@@ -156,12 +159,22 @@ $('export-backup').addEventListener('click', () => { download(JSON.stringify(sta
 $('export-csv').addEventListener('click', () => download(exportCSV(state), 'text/csv;charset=utf-8', 'csv'));
 $('clear-data').addEventListener('click', () => {
   if (!confirm('Clear all guest records and responses from this browser? Export a backup first. This cannot be undone without a backup.')) return;
-  try { localStorage.removeItem(KEY); state = emptyState(); saved = false; storageBroken = false; $('search').value = ''; notice(); selectFilter('all'); render(); savingStatus('Local data cleared'); }
+  try { localStorage.removeItem(KEY); resetLocalView(); savingStatus('Local data cleared'); }
   catch { notice('Could not clear saved data. Your records have been kept.'); }
 });
+function resetLocalView() {
+  importSequence++; pendingGuestId = null;
+  for (const id of ['meal-dialog', 'guest-dialog', 'add-dialog']) $(id).close();
+  activeId = null; returnFocus = null; document.body.classList.remove('modal-open');
+  state = emptyState(); saved = false; storageBroken = false;
+  $('search').value = ''; $('csv-file').value = ''; $('json-file').value = '';
+  $('backup-status').textContent = 'No backup exported in this session.';
+  notice(); selectFilter('all'); render(); document.querySelector('[data-view="guests"]').click();
+}
 window.addEventListener('beforeunload', e => { if (state.guests.length && !saved) { e.preventDefault(); e.returnValue = ''; } });
 window.addEventListener('storage', e => {
   if (e.key !== KEY && e.key !== null) return;
+  if (e.newValue === null) { resetLocalView(); savingStatus('Local data cleared'); return; }
   if (!saved && state.guests.length) { notice('Another tab changed this list while this tab has unsaved edits. Export a backup from this tab, then refresh to load the other tab’s records.'); return; }
   try { state = e.newValue ? validateState(JSON.parse(e.newValue)) : emptyState(); $('meal-dialog').close(); $('guest-dialog').close(); saved = true; render(); savingStatus('Updated from another tab on this device'); }
   catch { notice('Another tab saved data that could not be read. Current records are still shown.'); }

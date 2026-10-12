@@ -8,8 +8,8 @@
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
   <title>Guest tracker</title>
   <link rel="icon" href="./icon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="./styles.css?v=simple-4">
-  <script type="module" src="./app.mjs?v=simple-4"></script>
+  <link rel="stylesheet" href="./styles.css?v=import-5">
+  <script type="module" src="./app.mjs?v=import-5"></script>
 </head>
 <body>
   <main>
@@ -31,7 +31,7 @@
       <button id="clear-data" class="danger-link">Clear local data</button>
       <div class="replace-section"><p>Import a different Excel or CSV file. This replaces the current guest list.</p><button id="replace-list" class="secondary">Replace guest list</button></div>
     </section>
-    <footer>v4</footer>
+    <footer>v5</footer>
   </main>
   <input type="file" id="csv-file" accept=".xlsx,.csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/csv" hidden><input type="file" id="json-file" accept=".json,application/json" hidden>
   <dialog id="add-dialog" aria-labelledby="add-title">

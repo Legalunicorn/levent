@@ -49,7 +49,7 @@ The public website starts empty. Guest data is parsed and stored entirely in the
 
 **Never add real guest data to this repository**, including fixtures, screenshots, backups, source workbooks or deployment files. `.gitignore` excludes CSV and Excel files as an extra safeguard. The private converted guest CSV is delivered separately outside the repository. No source workbook or private CSV is required to run or deploy the app.
 
-Excel import supports the supplied attendance template: worksheet `Event Registration`, headers in row 4, guest records in columns A–I from row 5 onward. Hotel totals in K–O are ignored. All data is read locally. The Excel library is included in `docs/vendor/` with its license; no external service is contacted.
+Excel import finds the guest headers in the first 100 rows of any worksheet. Sheet names, column order and guest counts can change. Extra columns are ignored; missing optional fields stay blank. A Name or Guest name heading is required. Case, spacing and punctuation differences in headers and known meal/status responses are accepted. Unknown meal/status values produce an error identifying the sheet and row, without replacing saved data. All data is read locally. The Excel library is included in `docs/vendor/` with its license; no external service is contacted.
 
 CSV requires these original headers: `Name`, `Company`, `Title`, `Email`, `Attendance`, `Preferred Lunch Starter`, `Preferred Lunch Main`, `Carpark Coupon?`, `Taxi/Grab Reimbursement?`. `Notes` and `Guest ID` are optional. Contact values are preserved as text, including non-email values. Blank responses stay blank. Unknown status or meal values, missing headers and malformed files are rejected before replacing records. Imports have a 10 MB limit.
 
