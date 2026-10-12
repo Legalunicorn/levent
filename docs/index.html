@@ -9,7 +9,7 @@
   <title>Gather · Guest tracker</title>
   <link rel="icon" href="./icon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="./styles.css">
-  <script type="module" src="./app.mjs"></script>
+  <script type="module" src="./app.mjs?v=excel-direct-2"></script>
 </head>
 <body>
   <header class="masthead"><a class="brand" href="./" aria-label="Gather home"><span class="brand-icon">g.</span> gather<span class="brand-caption">EVENT COMPANION</span></a><span class="privacy-dot">On this device only</span></header>
@@ -31,7 +31,7 @@
       <details class="help"><summary>Quick guide for iPhone</summary><ol><li>Save the private Excel (.xlsx) or CSV file to the Files app.</li><li>Open this website in Safari. Tap <strong>Import guest list</strong> and choose the Excel or CSV file.</li><li>Search for a guest and tap their card. Every edit saves automatically when storage is available.</li><li>Meal numbers are portions remaining. Red choices are unavailable; you can keep a guest’s existing choice.</li><li>Use <strong>Export backup</strong>, then save the downloaded JSON to Files. Use <strong>Restore backup</strong> to bring it back.</li></ol></details>
       <button id="clear-data" class="danger-link">Clear local data</button>
     </section>
-    <footer><span class="footer-mark">gather</span><span>More time with your guests.</span><span>Private by design · No uploads</span></footer>
+    <footer><span class="footer-mark">gather</span><span>Excel import v2</span><span>Private by design · No uploads</span></footer>
   </main>
   <input type="file" id="csv-file" accept=".xlsx,.csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/csv" hidden><input type="file" id="json-file" accept=".json,application/json" hidden>
   <dialog id="guest-dialog" aria-labelledby="detail-name"><div class="sheet-header"><span class="eyebrow">GUEST DETAILS</span><button id="close-detail" class="icon-button" aria-label="Close guest details">✕</button></div><div id="guest-detail"></div><div class="sheet-footer"><span id="detail-save" role="status">Saved on this device</span><button id="done-detail" class="primary">Done</button></div></dialog>

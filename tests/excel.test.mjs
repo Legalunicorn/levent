@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
-import { importExcel } from '../docs/excel.mjs';
+import { importExcel, importGuestFile } from '../docs/excel.mjs';
 import { importCSV, COLUMNS, meals } from '../docs/core.mjs';
 import * as XLSX from '../docs/vendor/xlsx.mjs';
 
@@ -21,8 +21,20 @@ test('bad Excel imports are rejected', async () => {
   const workbook = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(workbook, XLSX.utils.aoa_to_sheet([['wrong']]), 'Other');
   await assert.rejects(importExcel(XLSX.write(workbook, { type: 'array', bookType: 'xlsx' })), /Event Registration/);
 });
+test('Excel content is detected even with a CSV filename, preserving literal quotes', async () => {
+  const contact = 'Guest "quoted", contact\nsecond line';
+  const sheet = XLSX.utils.aoa_to_sheet([[], [], [], Object.values(COLUMNS).slice(0, 9),
+    ['Guest "1"', 'Company, Inc.', '', contact, 'Not Arrived', '', '', 'No', 'No']]);
+  const workbook = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(workbook, sheet, 'Event Registration');
+  const bytes = XLSX.write(workbook, { type: 'array', bookType: 'xlsx' });
+  for (const filename of ['Attendance List.xlsx', 'Attendance List.csv', 'Attendance List.xlxs', 'Attendance List']) {
+    const result = await importGuestFile(new File([bytes], filename));
+    assert.equal(result.guests[0].contact, contact);
+    assert.equal(result.guests[0].name, 'Guest "1"');
+  }
+});
 test('original private workbook imports all 11 guests exactly', { skip: !process.env.PRIVATE_GUEST_XLSX || !process.env.PRIVATE_GUEST_CSV }, async () => {
-  const result = await importExcel(await readFile(process.env.PRIVATE_GUEST_XLSX));
+  const result = await importGuestFile(new File([await readFile(process.env.PRIVATE_GUEST_XLSX)], 'Attendance List.xlsx'));
   const expected = importCSV(await readFile(process.env.PRIVATE_GUEST_CSV, 'utf8'));
   const withoutIds = s => s.guests.map(({ id, ...fields }) => fields);
   assert.deepEqual(withoutIds(result), withoutIds(expected));

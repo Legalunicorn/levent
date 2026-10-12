@@ -1,5 +1,5 @@
-import { emptyState, validateState, importCSV, exportCSV, meals, setMeal, missingMeal, searchGuests, ATTENDANCE, ANSWERS } from './core.mjs';
-import { importExcel } from './excel.mjs';
+import { emptyState, validateState, exportCSV, meals, setMeal, missingMeal, searchGuests, ATTENDANCE, ANSWERS } from './core.mjs';
+import { importGuestFile } from './excel.mjs?v=excel-direct-2';
 const $ = id => document.getElementById(id);
 const KEY = `gather:v1:${location.pathname.replace(/index\.html$/, '')}`;
 let state = emptyState(), currentView = 'guests', filter = 'all', activeId = null, saved = false, storageBroken = false, scrollY = 0, returnFocus = null;
@@ -107,9 +107,7 @@ async function readImport(input, kind) {
     if (file.size > 10 * 1024 * 1024) throw new Error('Please choose a file smaller than 10 MB.');
     let next;
     if (kind === 'json') next = validateState(JSON.parse((await file.text()).replace(/^\uFEFF/, '')));
-    else if (/\.xlsx$/i.test(file.name)) next = await importExcel(await file.arrayBuffer());
-    else if (/\.csv$/i.test(file.name)) next = importCSV(await file.text());
-    else throw new Error('Choose an Excel (.xlsx) or CSV (.csv) file.');
+    else next = await importGuestFile(file);
     if (!confirmReplace(kind === 'json' ? 'Restoring this backup' : 'Importing this guest list')) return;
     state = next; $('search').value = ''; filter = 'all'; notice(); persist(); render(); selectFilter('all');
     const warnings = overages(); if (warnings.length && !storageBroken) notice(`Imported all records. Please resolve these meal allocations in Summary:\n${warnings.join('\n')}`);
